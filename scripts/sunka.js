@@ -2,65 +2,111 @@
     sunka game
 -------------------------------------------------------*/
 define(function(){
-    var currentPlayer       = 1,
+    var exports             = {},
+        currentPlayerIndex  = 0,
         players             = [],
-        pots                = [];
-
-    var Pot = function() {
+        pots                = [],
         
+        POT_EMPTY_ERROR     = 'You cannot pick up from an empty pot';
+
+    var Pot = function(nextPot, nextPlayer) {
+        this.nextPot = nextPot;
+        this.nextPlayer = nextPlayer;
     };
     Pot.prototype = {
-        shellCount: 7
+        shellCount: 7,
+        drop: function(shellCount) {
+            if (shellCount > 0) {
+                this.shellCount +=1;
+                shellCount--;
+                if (this.nextPlayer && this.nextPlayer === currentPlayer()) {
+                    shellCount = this.nextPlayer.drop(shellCount);
+                }
+                if (this.nextPot){
+                    this.nextPot.drop(shellCount);
+                }
+            }
+            return shellCount;
+        },
+        empty: function() {
+            var shellCount = this.shellCount;
+            this.shellCount = 0;
+            if (this.nextPlayer && this.nextPlayer === currentPlayer()){
+                shellCount = this.nextPlayer.drop(shellCount);
+            }
+            if (this.nextPot) {
+                this.nextPot.drop(shellCount);
+            }
+        }
     };
 
 
     var Player = function(){
+        this.pot = new Pot();
+        this.pot.shellCount = 0;
     };
     Player.prototype = {
-        pot: new Pot()
+        drop: function(shellCount) {
+            return this.pot.drop(shellCount);
+        }
     };
 
-    var exports = {
+    exports = {
+        // access to variables
+        errors: {
+            POT_EMPTY_ERROR: POT_EMPTY_ERROR
+        },
         allPots: function() {
             return pots;
         },
-        // player
-        currentPlayer: function(){
-            return currentPlayer;
-        },
-        players: function() {
-            return players;
-        },
-        potCount: function(player) {
-            return players[player-1].pot.shellCount;
-        },
+
+        // game actions
         startGame: function(){
             players = [
                 new Player(),
                 new Player()
             ];
             pots = [];
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
-            pots.unshift(new Pot(pots[1]));
+            pots.unshift(new Pot(null, players[1])); // 14
+            pots.unshift(new Pot(pots[0])); // 13
+            pots.unshift(new Pot(pots[0])); // 12
+            pots.unshift(new Pot(pots[0])); // 11
+            pots.unshift(new Pot(pots[0])); // 10
+            pots.unshift(new Pot(pots[0])); // 09
+            pots.unshift(new Pot(pots[0])); // 08
+            pots.unshift(new Pot(pots[0], players[0])); // 07
+            pots.unshift(new Pot(pots[0])); // 06
+            pots.unshift(new Pot(pots[0])); // 05
+            pots.unshift(new Pot(pots[0])); // 04
+            pots.unshift(new Pot(pots[0])); // 03
+            pots.unshift(new Pot(pots[0])); // 02
+            pots.unshift(new Pot(pots[0])); // 01
+
+            pots[13].nextPot = pots[0];
+
             return true;
         },
         turn: function(potNumber) {
-            var pot = pots[potNumber - 1];
-            // pot.empty();
+            var pot = pots[potNumber - 1],
+                shells;
+
+            if (pot.shellCount === 0) {
+                throw POT_EMPTY_ERROR;
+            }
+            shells = pot.empty();
             return true;
         }
+    };
+
+    // player
+    var currentPlayer = exports.currentPlayer = function(){
+        return players[currentPlayerIndex];
+    };
+    exports.players = function() {
+        return players;
+    };
+    var potCount = exports.potCount = function(player) {
+        return players[player-1].pot.shellCount;
     };
 
     return exports;
