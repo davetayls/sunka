@@ -14,16 +14,24 @@ define(function(){
         this.nextPlayer = nextPlayer;
     };
     Pot.prototype = {
+        isPlayerPot: false,
         shellCount: 7,
         drop: function(shellCount) {
             if (shellCount > 0) {
                 this.shellCount +=1;
                 shellCount--;
-                if (this.nextPlayer && this.nextPlayer === currentPlayer()) {
-                    shellCount = this.nextPlayer.drop(shellCount);
-                }
-                if (this.nextPot){
-                    this.nextPot.drop(shellCount);
+
+                if (shellCount === 0 && this.shellCount === 1 && !this.isPlayerPot) {
+                    changePlayer();
+                } else if (shellCount === 0 && this.shellCount > 1 && !this.isPlayerPot) {
+                    this.empty();
+                } else if (shellCount > 0) {
+                    if (this.nextPlayer && this.nextPlayer === currentPlayer()) {
+                        shellCount = this.nextPlayer.drop(shellCount);
+                    }
+                    if (this.nextPot){
+                        this.nextPot.drop(shellCount);
+                    }
                 }
             }
             return shellCount;
@@ -44,6 +52,7 @@ define(function(){
     var Player = function(){
         this.pot = new Pot();
         this.pot.shellCount = 0;
+        this.pot.isPlayerPot = true;
     };
     Player.prototype = {
         drop: function(shellCount) {
@@ -107,6 +116,9 @@ define(function(){
     };
     var potCount = exports.potCount = function(player) {
         return players[player-1].pot.shellCount;
+    };
+    var changePlayer = function() {
+        currentPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
     };
 
     return exports;
