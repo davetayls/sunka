@@ -1,4 +1,7 @@
+/*jslint browser: true, vars: true, white: true, forin: true, plusplus: true, indent: 4 */
+/*global define,require,describe,afterEach,beforeEach,expect,it,waitsFor */
 describe("Sunka", function() {
+    'use strict';
 
     var sunka;
 
@@ -28,23 +31,30 @@ describe("Sunka", function() {
             expect(sunka.currentPlayer()).toBe(sunka.players()[0]);
         });
         it('sets up pots', function(){
-            expect(sunka.allPots().length).toEqual(14);
+            expect(sunka.allPots().length).toEqual(16);
             expect(sunka.allPots()[6].nextPot).toBe(sunka.allPots()[7]);
-            expect(sunka.allPots()[13].nextPot).toBe(sunka.allPots()[0]);
+            expect(sunka.allPots()[sunka.allPots().length-1].nextPot).toBe(sunka.allPots()[0]);
         });
 
         it('links players to pots', function(){
-            expect(sunka.allPots()[6].nextPlayer).toBe(sunka.players()[0]);
-            expect(sunka.allPots()[13].nextPlayer).toBe(sunka.players()[1]);
+            expect(sunka.allPots()[7].player).toBe(sunka.players()[0]);
+            expect(sunka.allPots()[15].player).toBe(sunka.players()[1]);
         });
         
         it('takes a turn', function(){
             expect(sunka.turn(1)).toBeTruthy();
-            expect(sunka.allPots()[0].shellCount).toBe(0);
+            expect(sunka.allPots()[0].shellCount)
+                .toBe(0);
+        });
+
+        it('sees pot 2 has gained a shell', function(){
+            expect(sunka.allPots()[1].shellCount)
+                .toBe(8);
         });
 
         it('sees player 1 has gained a shell', function(){
-            expect(sunka.players()[0].pot.shellCount).toBe(1);
+            expect(sunka.players()[0].pot.shellCount)
+                .toBe(1);
         });
 
         it('finds more shells in pots 2-7', function(){
@@ -56,14 +66,14 @@ describe("Sunka", function() {
             expect(sunka.allPots()[6].shellCount).toBe(8);
         });
         
-        it('has not put shells in pots 8-14', function(){
-            expect(sunka.allPots()[7].shellCount).toBe(7);
+        it('has not put shells in pots 9-15', function(){
             expect(sunka.allPots()[8].shellCount).toBe(7);
             expect(sunka.allPots()[9].shellCount).toBe(7);
             expect(sunka.allPots()[10].shellCount).toBe(7);
             expect(sunka.allPots()[11].shellCount).toBe(7);
             expect(sunka.allPots()[12].shellCount).toBe(7);
             expect(sunka.allPots()[13].shellCount).toBe(7);
+            expect(sunka.allPots()[14].shellCount).toBe(7);
         });
 
         it('has kept the player as player 1', function(){
@@ -72,6 +82,11 @@ describe("Sunka", function() {
 
         it('does\'t let player 1 pick up from empty pot 1', function(){
             expect(function(){sunka.turn(1);}).toThrow(sunka.errors.POT_EMPTY_ERROR);
+        });
+
+        it('does\'t let player 1 pick up from a player pot', function(){
+            expect(function(){sunka.turn(8);})
+            .toThrow(sunka.errors.POT_IS_PLAYER);
         });
 
         it('takes a second turn', function(){
@@ -97,16 +112,17 @@ describe("Sunka", function() {
             expect(sunka.allPots()[3].shellCount).toBe(9);
             expect(sunka.allPots()[4].shellCount).toBe(9);
             expect(sunka.allPots()[5].shellCount).toBe(9);
+            expect(sunka.allPots()[6].shellCount).toBe(1);
         });
         
-        it('finds 8 shells in pot 8-14', function(){
-            expect(sunka.allPots()[7].shellCount).toBe(8);
+        it('finds correct shells in pot 8-14', function(){
             expect(sunka.allPots()[8].shellCount).toBe(8);
             expect(sunka.allPots()[9].shellCount).toBe(8);
             expect(sunka.allPots()[10].shellCount).toBe(8);
             expect(sunka.allPots()[11].shellCount).toBe(8);
             expect(sunka.allPots()[12].shellCount).toBe(8);
-            expect(sunka.allPots()[13].shellCount).toBe(0);
+            expect(sunka.allPots()[13].shellCount).toBe(8);
+            expect(sunka.allPots()[14].shellCount).toBe(0);
         });
 
         it('finds no shells in player 2\'s pot', function(){
@@ -129,7 +145,7 @@ describe("Sunka", function() {
         });
 
         it('ended the turn on an empty pot', function(){
-            expect(sunka.allPots()[13].shellCount).toBe(1);
+            expect(sunka.allPots()[14].shellCount).toBe(1);
         });
 
         it('has a new active player', function(){
@@ -137,7 +153,7 @@ describe("Sunka", function() {
         });
 
         it('sees player 2 take it\'s first turn', function(){
-            expect(sunka.turn(12)).toBe(true);
+            expect(sunka.turn(13)).toBe(true);
         });
         /*  BOARD AFTER TURN
 
@@ -159,13 +175,14 @@ describe("Sunka", function() {
             expect(sunka.allPots()[4].shellCount).toBe(10);
             expect(sunka.allPots()[5].shellCount).toBe(1);
             expect(sunka.allPots()[6].shellCount).toBe(2);
-            expect(sunka.allPots()[7].shellCount).toBe(9);
+
             expect(sunka.allPots()[8].shellCount).toBe(9);
             expect(sunka.allPots()[9].shellCount).toBe(9);
             expect(sunka.allPots()[10].shellCount).toBe(9);
-            expect(sunka.allPots()[11].shellCount).toBe(0);
-            expect(sunka.allPots()[12].shellCount).toBe(10);
-            expect(sunka.allPots()[13].shellCount).toBe(2);
+            expect(sunka.allPots()[11].shellCount).toBe(9);
+            expect(sunka.allPots()[12].shellCount).toBe(0);
+            expect(sunka.allPots()[13].shellCount).toBe(10);
+            expect(sunka.allPots()[14].shellCount).toBe(2);
         });
 
         it('has a new active player 1', function(){
@@ -174,7 +191,6 @@ describe("Sunka", function() {
 
         it('sees player 1 take some turns', function(){
             expect(sunka.turn(5)).toBe(true);
-            console.log(sunka.players()[0].pot.shellCount);
         });
         /*  BOARD AFTER TURN
 

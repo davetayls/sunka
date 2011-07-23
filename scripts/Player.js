@@ -1,17 +1,14 @@
 /**
     Player
 -------------------------------------------------------*/
+/*jslint browser: true, vars: true, white: true, forin: true, plusplus: true, indent: 4 */
+/*global define,require */
 define([ 'Pot' ], function(Pot){
+    'use strict';
 
     var Player = function(){
-        this.pot = new Pot();
-        this.pot.shellCount = 0;
-        this.pot.isPlayerPot = true;
     };
     Player.prototype = {
-        drop: function(shellCount) {
-            return this.pot.drop(shellCount);
-        }
     };
 
     return Player;

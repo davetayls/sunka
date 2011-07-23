@@ -1,0 +1,3 @@
+[submodule "scripts/require-cs"]
+	path = scripts/require-cs
+	url = git://github.com/jrburke/require-cs.git
