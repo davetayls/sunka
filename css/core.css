@@ -1,0 +1,11 @@
+
+.pot {
+    background: #ccc;
+    list-style: none outside none;
+    margin: 3px;
+    padding: 7px 0;
+    float: left;
+    height: 15px;
+    text-align: center;
+    width: 30px;
+}

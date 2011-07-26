@@ -66,7 +66,6 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
     var removeShellsFromHand = function(shells) {
         shellsInHand -= shells;
     };
-
     // player
     var currentPlayer = exports.currentPlayer = function(){
         return players[currentPlayerIndex];
@@ -122,6 +121,33 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
         }
         return nextPot;
     };
+    var getTotalShells = function() {
+        return (pots.length - players.length) * 7;
+    };
+    var shellsOnTheBoard = function(allPots){
+        var ln = allPots.length,
+            i,
+            total = 0;
+        for (i = 0; i < ln; i++) {
+            total += allPots[i].shellCount;
+        }
+        return total;
+    };
+    var hasWon = function(allPots) {
+        var playerDiff = players[0].pot.shellCount > players[1].shellCount 
+                         ? players[0].pot.shellCount - players[1].shellCount 
+                         : players[1].pot.shellCount > players[0].shellCount,
+            shellsLeft = shellsOnTheBoard(allPots);
+
+        if (playerDiff > shellsLeft) {
+            return false;
+        }
+        return players[0].pot.shellCount > players[1].pot.shellCount ? players[0] : players[1];
+    };
+    exports.hasWon = function(){
+        return hasWon(this.allPots());
+    }
+
     var turn = exports.turn = function(potNumber) {
         var pot = pots[potNumber - 1];
 

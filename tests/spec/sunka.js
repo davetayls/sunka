@@ -189,8 +189,15 @@ describe("Sunka", function() {
             expect(sunka.currentPlayer()).toBe(sunka.players()[0]);
         });
 
-        it('sees player 1 take some turns', function(){
-            expect(sunka.turn(5)).toBe(true);
+        it('sees player 1 wins', function(){
+            var i, 
+                potsLength = sunka.allPots().length;
+            for (i = 0; i < potsLength; i++) {
+                sunka.allPots()[i].shellCount = 0;
+            }
+            sunka.allPots()[6].shellCount = 1;
+            expect(sunka.turn(7)).toBe(true);
+            expect(sunka.hasWon()).toBe(sunka.players()[0]);
         });
         /*  BOARD AFTER TURN
 
