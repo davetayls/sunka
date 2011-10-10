@@ -26,9 +26,15 @@ describe("Sunka", function() {
         it('can start a new game', function(){
             expect(sunka.startGame()).toBeTruthy();
         });
+        it('can see new game in the queue', function(){
+            expect(sunka.uiQueue.pull().key).toBe(sunka.QUEUE_KEYS.startGame);
+        });
         it('sets up players', function(){
             expect(sunka.players().length).toEqual(2);
             expect(sunka.currentPlayer()).toBe(sunka.players()[0]);
+        });
+        it('can see a new turn has begun in the queue', function(){
+            expect(sunka.uiQueue.pull().key).toBe(sunka.QUEUE_KEYS.turnBegin);
         });
         it('sets up pots', function(){
             expect(sunka.allPots().length).toEqual(16);

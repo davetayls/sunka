@@ -3,11 +3,11 @@
 -------------------------------------------------------*/
 /*jslint browser: true, vars: true, white: true, forin: true, plusplus: true, indent: 4 */
 /*global define,require */
-define([ 'Pot', 'Player' ], function(Pot, Player){
+define([ 'Pot', 'Player', 'Queue' ], function(Pot, Player, Queue){
     'use strict';
 
     var exports             = {},
-        currentPlayerIndex  = 0,
+        currentPlayerIndex  = -1,
         players             = [],
         pots                = [],
         shellsInHand        = 0,
@@ -17,8 +17,7 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
         POT_IS_PLAYER       = 'You can\'t pick up from a player pot',
         POT_EMPTY_ERROR     = 'You cannot pick up from an empty pot';
         
-    // logging
-    
+    // => logging
     var log = function(log){
         if (window.console){ window.console.log(log); }
     };
@@ -31,95 +30,24 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
         }
     };
 
-    var resetPlayers = function(){
-        players = [
-            new Player(),
-            new Player()
-        ];
-    };
-    var resetPots = function() {
-        pots = [];
-        pots.unshift(new Pot(null, players[1])); // 16
-        pots.unshift(new Pot(pots[0])); // 15
-        pots.unshift(new Pot(pots[0])); // 14
-        pots.unshift(new Pot(pots[0])); // 13
-        pots.unshift(new Pot(pots[0])); // 12
-        pots.unshift(new Pot(pots[0])); // 11
-        pots.unshift(new Pot(pots[0])); // 10
-        pots.unshift(new Pot(pots[0])); // 09
-        pots.unshift(new Pot(pots[0], players[0])); // 08
-        pots.unshift(new Pot(pots[0])); // 07
-        pots.unshift(new Pot(pots[0])); // 06
-        pots.unshift(new Pot(pots[0])); // 05
-        pots.unshift(new Pot(pots[0])); // 04
-        pots.unshift(new Pot(pots[0])); // 03
-        pots.unshift(new Pot(pots[0])); // 02
-        pots.unshift(new Pot(pots[0])); // 01
+    // => Queues
+    var uiQueue = exports.uiQueue = new Queue(),
+        QUEUE_KEYS = exports.QUEUE_KEYS = {
+            startGame: 'startGame',
+            turnBegin: 'turnBegin'
+        };
 
-        pots[15].nextPot = pots[0];
-    };
-
-    // misc
+    // => misc
     var addShellsToHand = function(shells) {
         shellsInHand += shells;
+        uiQueue.add({ key: QUEUE_KEYS.handChange });
     };
     var removeShellsFromHand = function(shells) {
         shellsInHand -= shells;
+        uiQueue.add({ key: QUEUE_KEYS.handChange });
     };
-    // player
-    var currentPlayer = exports.currentPlayer = function(){
-        return players[currentPlayerIndex];
-    };
-    exports.players = function() {
-        return players;
-    };
-    var changePlayer = function() {
-        currentPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
-        log('Player changed to: ' + (currentPlayerIndex + 1));
-    };
-
-    // pots
-    var potCount = exports.potCount = function(player) {
-        return players[player-1].pot.shellCount;
-    };
-    var getNextPot = function(pot, player) {
-        if (pot.nextPot.player){ 
-            if (pot.nextPot.player === player) {
-                return pot.nextPot;
-            } else {
-                return pot.nextPot.nextPot;
-            }
-        }else{
-            return pot.nextPot;
-        }
-    };
-    exports.allPots = function() {
-        return pots;
-    };
-
-    // game actions
-    exports.startGame = function(){
-        resetPlayers();
-        resetPots();
-        return true;
-    };
-    var run = function(pot) {
-        var nextPot = pot;
-
-        if (pot) {
-            if (pot.shellCount === 0) {
-                throw POT_EMPTY_ERROR;
-            }
-            addShellsToHand(pot.empty());
-            do {
-                nextPot = getNextPot(nextPot, currentPlayer());
-                nextPot.drop();
-                removeShellsFromHand(1);
-            } while (shellsInHand);
-        } else {
-            throw POT_NOT_EXIST;
-        }
-        return nextPot;
+    var countShellsInHand = exports.countShellsInHand = function() {
+        return shellsInHand;
     };
     var getTotalShells = function() {
         return (pots.length - players.length) * 7;
@@ -146,8 +74,98 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
     };
     exports.hasWon = function(){
         return hasWon(this.allPots());
-    }
+    };
 
+
+    // => player
+    var currentPlayer = exports.currentPlayer = function(){
+        return players[currentPlayerIndex];
+    };
+    exports.players = function() {
+        return players;
+    };
+    var changePlayer = function() {
+        currentPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
+        uiQueue.add({ key: QUEUE_KEYS.turnBegin });
+        log('Player changed to: ' + (currentPlayerIndex + 1));
+    };
+
+    // => pots
+    var potCount = exports.potCount = function(player) {
+        return players[player-1].pot.shellCount;
+    };
+    var getNextPot = function(pot, player) {
+        if (pot.nextPot.player){ 
+            if (pot.nextPot.player === player) {
+                return pot.nextPot;
+            } else {
+                return pot.nextPot.nextPot;
+            }
+        }else{
+            return pot.nextPot;
+        }
+    };
+    exports.allPots = function() {
+        return pots;
+    };
+
+    // => set up
+    var resetPlayers = function(){
+        players = [
+            new Player(),
+            new Player()
+        ];
+        changePlayer();
+    };
+    var resetPots = function() {
+        pots = [];
+        pots.unshift(new Pot(7, null, players[1])); // 16
+        pots.unshift(new Pot(7, pots[0])); // 15
+        pots.unshift(new Pot(7, pots[0])); // 14
+        pots.unshift(new Pot(7, pots[0])); // 13
+        pots.unshift(new Pot(7, pots[0])); // 12
+        pots.unshift(new Pot(7, pots[0])); // 11
+        pots.unshift(new Pot(7, pots[0])); // 10
+        pots.unshift(new Pot(9, pots[0])); // 09
+        pots.unshift(new Pot(8, pots[0], players[0])); // 08
+        pots.unshift(new Pot(7, pots[0])); // 07
+        pots.unshift(new Pot(6, pots[0])); // 06
+        pots.unshift(new Pot(5, pots[0])); // 05
+        pots.unshift(new Pot(4, pots[0])); // 04
+        pots.unshift(new Pot(3, pots[0])); // 03
+        pots.unshift(new Pot(2, pots[0])); // 02
+        pots.unshift(new Pot(1, pots[0])); // 01
+
+        pots[15].nextPot = pots[0];
+    };
+
+    // => game actions
+    exports.startGame = function(){
+        uiQueue.add({ key: QUEUE_KEYS.startGame });
+        resetPlayers();
+        resetPots();
+        return true;
+    };
+    var run = function(pot) {
+        var nextPot = pot;
+
+        if (pot) {
+            if (pot.shellCount === 0) {
+                throw POT_EMPTY_ERROR;
+            }
+            addShellsToHand(pot.empty());
+            uiQueue.add({ key: QUEUE_KEYS.potChange });
+            do {
+                nextPot = getNextPot(nextPot, currentPlayer());
+                nextPot.drop();
+                uiQueue.add({ key: QUEUE_KEYS.potChange });
+                removeShellsFromHand(1);
+            } while (shellsInHand);
+        } else {
+            throw POT_NOT_EXIST;
+        }
+        return nextPot;
+    };
     var turn = exports.turn = function(potNumber) {
         var pot = pots[potNumber - 1];
 
@@ -167,13 +185,12 @@ define([ 'Pot', 'Player' ], function(Pot, Player){
         logTurnOutcome();
         return true;
     };
-    
-    // errors
+
+    // => errors
     exports.errors = {
         POT_EMPTY_ERROR: POT_EMPTY_ERROR,
         POT_IS_PLAYER: POT_IS_PLAYER
     };
-
 
     return exports;
 });
